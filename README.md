@@ -1,4 +1,4 @@
-📝 Resume Generator (Python + LaTeX)
+##📝 Resume Generator (Python + LaTeX)
 
 A Python-based resume generator that uses Jinja2 templating with a LaTeX backend to produce professional PDF resumes automatically.  
 This project makes it simple to take structured data (like name, education, skills, experience) and compile it into a polished resume.
