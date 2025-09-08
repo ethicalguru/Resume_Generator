@@ -5,7 +5,7 @@ This project makes it simple to take structured data (like name, education, skil
 
 ---
 
-🚀 Features
+## 🚀 Features
 - Write your resume data once in Python (JSON-style dictionaries).
 - Automatically renders into a LaTeX template.
 - Compiles into a professional PDF.
