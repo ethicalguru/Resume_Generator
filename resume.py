@@ -60,8 +60,8 @@ latex_template = r"""
     << address >> \\ \vspace{1pt}
     \small \faPhone~<< phone >> ~
     \href{mailto:<< email >>}{\faEnvelope~\url{<< email_latex >>}} ~
-    \href{<< linkedin >>}{\faLinkedin~\url{<< linkedin_text >>}} ~
-    \href{<< github >>}{\faGithub~\url{<< github_text >>}}
+    \href{<< linkedin >>}{\faLinkedin~<< linkedin_text >>} ~
+    \href{<< github >>}{\faGithub~<< github_text >>}
 \end{center}
 
 \section*{Education}
@@ -153,6 +153,8 @@ user_data = {
 # Escape all user data for LaTeX (except URLs and email used with \url{})
 user_data_escaped = escape_data(user_data)
 user_data_escaped["email_latex"] = user_data["email"]  # raw text is fine inside \url{}
+user_data_escaped["linkedin"] = user_data["linkedin"]  # keep raw URL for \href{}
+user_data_escaped["github"] = user_data["github"]      # keep raw URL for \href{}
 user_data_escaped["linkedin_text"] = user_data["linkedin_text"]
 user_data_escaped["github_text"] = user_data["github_text"]
 
