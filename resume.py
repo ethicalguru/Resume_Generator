@@ -9,26 +9,37 @@ env = Environment(
     variable_end_string=">>"
 )
 
-# Helper to escape underscores in email for LaTeX
-def escape_latex(text):
-    # Escape all LaTeX special characters, & first!
-    specials = [
-        ('&', r'\&'),
-        ('%', r'\%'),
-        ('$', r'\$'),
-        ('#', r'\#'),
-        ('_', r'\_'),
-        ('{', r'\{'),
-        ('}', r'\}'),
-        ('~', r'\textasciitilde{}'),
-        ('^', r'\textasciicircum{}'),
-        ('\\', r'\textbackslash{}'),
-    ]
-    for char, escape in specials:
-        text = text.replace(char, escape)
-    return text
+# Function to escape LaTeX special characters
+def latex_escape(s):
+    if not isinstance(s, str):
+        return s
+    replacements = {
+        '&': r'\&',
+        '%': r'\%',
+        '$': r'\$',
+        '#': r'\#',
+        '_': r'\_',
+        '{': r'\{',
+        '}': r'\}',
+        '~': r'\textasciitilde{}',
+        '\\': r'\textbackslash{}'
+    }
+    for key, val in replacements.items():
+        s = s.replace(key, val)
+    return s
 
-# Load LaTeX template with safer delimiters and fixed icon usage
+# Recursive function to escape nested data
+def escape_data(data):
+    if isinstance(data, str):
+        return latex_escape(data)
+    elif isinstance(data, list):
+        return [escape_data(item) for item in data]
+    elif isinstance(data, dict):
+        return {k: escape_data(v) for k, v in data.items()}
+    else:
+        return data
+
+# LaTeX template
 latex_template = r"""
 \documentclass[letterpaper,11pt]{article}
 \usepackage{latexsym}
@@ -47,24 +58,15 @@ latex_template = r"""
 \begin{center}
     {\Huge \scshape << name >>} \\ \vspace{1pt}
     << address >> \\ \vspace{1pt}
-    \small \faPhone~<< phone >>
-    ~ \href{mailto:<< email >>}{\faEnvelope~\underline{<< email_latex >>}} ~
-    \href{<< linkedin >>}{\faLinkedin~<< linkedin_text >>} ~
-    \href{<< github >>}{\faGithub~<< github_text >>}
+    \small \faPhone~<< phone >> ~
+    \href{mailto:<< email >>}{\faEnvelope~\url{<< email_latex >>}} ~
+    \href{<< linkedin >>}{\faLinkedin~\url{<< linkedin_text >>}} ~
+    \href{<< github >>}{\faGithub~\url{<< github_text >>}}
 \end{center}
 
 \section*{Education}
 \textbf{<< education.institution >>} \hfill << education.dates >> \\
 \textit{<< education.degree >>} \hfill << education.location >>
-
-{% if experience %}
-\section*{Experience}
-{% for exp in experience %}
-\textbf{<< exp.title >>} -- << exp.company >> \hfill << exp.dates >> \\
-\textit{<< exp.location >>} \\
-<< exp.description >> \\[4pt]
-{% endfor %}
-{% endif %}
 
 {% if projects %}
 \section*{Projects}
@@ -79,9 +81,19 @@ latex_template = r"""
 \textbf{Developer Tools:} << skills.tools >> \\
 \textbf{Frameworks:} << skills.frameworks >>
 
+{% if achievements %}
+\section*{Achievements}
+\begin{itemize}
+{% for ach in achievements %}
+    \item << ach >>
+{% endfor %}
+\end{itemize}
+{% endif %}
+
 \end{document}
 """
 
+# Helper functions for interactive input
 def get_input(prompt, default=""):
     value = input(f"{prompt} [{default}]: ")
     return value.strip() if value.strip() else default
@@ -100,71 +112,62 @@ def get_multientry(section_name, fields):
         entries.append(entry)
     return entries
 
+def get_list(section_name):
+    items = []
+    print(f"\nEnter {section_name} (leave empty to finish):")
+    while True:
+        item = get_input(f"{section_name} Item", "")
+        if not item:
+            break
+        items.append(item)
+    return items
+
 # Collect user data interactively
-linkedin_text = get_input("LinkedIn display text", "LinkedIn")
-linkedin_url = get_input("LinkedIn URL", "https://linkedin.com/in/johndoe")
-github_text = get_input("GitHub display text", "GitHub")
-github_url = get_input("GitHub URL", "https://github.com/johndoe")
-
-# Experience and Projects
-experience_entries = get_multientry(
-    "Experience",
-    {"company": "", "location": "", "dates": "", "description": ""}
-)
-project_entries = get_multientry(
-    "Project",
-    {"description": ""}
-)
-
 user_data = {
     "name": get_input("Full Name", "John Doe"),
     "address": get_input("Address", "123 Cyber Street, Melbourne"),
     "phone": get_input("Phone", "+61 400 000 000"),
     "email": get_input("Email", "john@example.com"),
-    "linkedin_text": linkedin_text,
-    "linkedin": linkedin_url,
-    "github_text": github_text,
-    "github": github_url,
-    "experience": experience_entries,
-    "projects": project_entries,
+    "linkedin_text": get_input("LinkedIn display text", "LinkedIn"),
+    "linkedin": get_input("LinkedIn URL", "https://linkedin.com/in/johndoe"),
+    "github_text": get_input("GitHub display text", "GitHub"),
+    "github": get_input("GitHub URL", "https://github.com/johndoe"),
     "education": {
         "institution": get_input("Education Institution", "Monash University"),
         "degree": get_input("Degree", "Bachelor of IT, Major in Cybersecurity"),
         "location": get_input("Education Location", "Clayton, VIC"),
         "dates": get_input("Education Dates", "2025–2027")
     },
+    "projects": get_multientry(
+        "Project",
+        {"description": ""}
+    ),
     "skills": {
         "languages": get_input("Programming Languages", "Python, Java, SQL"),
         "tools": get_input("Developer Tools", "Git, Docker, VS Code, Postman"),
         "frameworks": get_input("Frameworks", "Flask, Django, React")
-    }
+    },
+    "achievements": get_list("Achievement")
 }
 
-# Escape all user data for LaTeX, including lists of dicts
-def escape_data(data):
-    if isinstance(data, str):
-        return escape_latex(data)
-    elif isinstance(data, list):
-        return [escape_data(item) for item in data]
-    elif isinstance(data, dict):
-        return {k: escape_data(v) for k, v in data.items()}
-    else:
-        return data
-
-user_data = escape_data(user_data)
-user_data["email_latex"] = user_data["email"]
+# Escape all user data for LaTeX (except URLs and email used with \url{})
+user_data_escaped = escape_data(user_data)
+user_data_escaped["email_latex"] = user_data["email"]  # raw text is fine inside \url{}
+user_data_escaped["linkedin_text"] = user_data["linkedin_text"]
+user_data_escaped["github_text"] = user_data["github_text"]
 
 # Render template
 template = env.from_string(latex_template)
-latex_content = template.render(**user_data)
+latex_content = template.render(**user_data_escaped)
 
+# Save LaTeX file
 with open("resume.tex", "w", encoding="utf-8") as f:
     f.write(latex_content)
 
 # Compile to PDF
 print("[*] Compiling LaTeX to PDF...")
 if shutil.which("pdflatex") is None:
-    print("[!] Error: 'pdflatex' not found. Please install a LaTeX distribution (e.g., MiKTeX or TeX Live) and ensure 'pdflatex' is in your PATH.")
+    print("[!] Error: 'pdflatex' not found. Install MiKTeX or TeX Live and add to PATH.")
 else:
     try:
         result = subprocess.run(
@@ -176,15 +179,8 @@ else:
         print("[+] Resume generated: resume.pdf")
     except subprocess.CalledProcessError as e:
         print("[!] LaTeX compilation failed.")
-        # Save log for debugging
         with open("latex_error.log", "wb") as logf:
             logf.write(e.stdout)
             logf.write(b"\n--- STDERR ---\n")
             logf.write(e.stderr)
         print("LaTeX error log saved to latex_error.log")
-        print("Last 40 lines of log:")
-        lines = e.stdout.decode(errors="ignore").splitlines()
-        for line in lines[-40:]:
-            print(line)
-
-print("NOTE: Do not enter LaTeX commands or special characters unless you want them escaped (e.g., &, %, $, #, _, {, }, ~, ^, \\). They will be escaped automatically.")
