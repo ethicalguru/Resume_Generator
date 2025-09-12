@@ -25,3 +25,7 @@ This project makes it simple to take structured data (like name, education, skil
 - Python packages:
   ```bash
   pip install jinja2
+
+## Upcoming Updates: 
+- adding UI for universal audience (code can still be run in terminal)
+- seeking more feedbacks :)
