@@ -28,4 +28,4 @@ This project makes it simple to take structured data (like name, education, skil
 
 ## Upcoming Updates: 
 - adding UI for universal audience (code can still be run in terminal)
-- seeking more feedbacks :)
+- input sanitization & LaTeX injection protection
